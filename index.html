@@ -269,30 +269,27 @@
 
   /* ============ FLAVOR GALLERY ============ */
   .flavors-section{padding:70px 0;background:var(--cream-deep);}
-  .flavor-scroll{
-    display:flex;gap:18px;overflow-x:auto;padding:6px 4px 20px;
-    scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;
+  .flavor-list{
+    display:flex;flex-direction:column;gap:26px;
+    max-width:640px;margin:0 auto;
   }
-  .flavor-scroll::-webkit-scrollbar{height:6px;}
-  .flavor-scroll::-webkit-scrollbar-thumb{background:var(--gold-soft);border-radius:6px;}
   .flavor-card{
-    flex:0 0 240px;scroll-snap-align:start;
-    background:var(--white);border-radius:20px;overflow:hidden;
-    box-shadow:0 14px 30px -14px rgba(59,36,32,0.22);
+    background:var(--white);border-radius:22px;overflow:hidden;
+    box-shadow:0 16px 34px -16px rgba(59,36,32,0.25);
   }
-  .flavor-card .ph{aspect-ratio:4/5;overflow:hidden;position:relative;}
+  .flavor-card .ph{aspect-ratio:4/3;overflow:hidden;position:relative;}
   .flavor-card .ph img{width:100%;height:100%;object-fit:cover;}
   .flavor-tag{
-    position:absolute;top:10px;left:10px;font-size:10.5px;font-weight:700;
-    text-transform:uppercase;letter-spacing:0.05em;padding:5px 10px;border-radius:999px;
+    position:absolute;top:12px;left:12px;font-size:11px;font-weight:700;
+    text-transform:uppercase;letter-spacing:0.05em;padding:6px 12px;border-radius:999px;
     color:var(--white);
   }
   .tag-keto{background:var(--cacao);}
   .tag-saludable{background:var(--rose-deep);}
-  .flavor-info{padding:16px 16px 18px;}
-  .flavor-info .name{font-family:var(--serif);font-size:17px;font-weight:600;line-height:1.2;}
-  .flavor-info .desc{font-size:12.5px;color:var(--chocolate);margin-top:6px;line-height:1.45;}
-  .flavor-count{text-align:center;margin-top:6px;color:var(--chocolate);font-size:13px;font-style:italic;font-family:var(--serif);}
+  .flavor-info{padding:18px 20px 22px;}
+  .flavor-info .name{font-family:var(--serif);font-size:20px;font-weight:600;line-height:1.2;}
+  .flavor-info .desc{font-size:13.5px;color:var(--chocolate);margin-top:8px;line-height:1.5;}
+  .flavor-count{text-align:center;margin-top:22px;color:var(--chocolate);font-size:13px;font-style:italic;font-family:var(--serif);}
 
   /* ============ WHAT YOU LEARN / TECHNIQUE ============ */
   .learn-section{padding:70px 0;background:var(--cream);}
@@ -525,8 +522,8 @@
       <p>Lo que ves por fuera ya es apetecible. Lo que descubres por dentro es lo que en realidad vas a aprender a crear.</p>
     </div>
     <div class="crack-stage" id="crackStage" role="button" tabindex="0" aria-label="Toca para partir la galleta y descubrir los beneficios del curso">
-      <div class="crack-half crack-left"><img data-img="dobleChoc" alt=""></div>
-      <div class="crack-half crack-right"><img data-img="dobleChoc" alt=""></div>
+      <div class="crack-half crack-left"><img data-img="caramelchip" alt=""></div>
+      <div class="crack-half crack-right"><img data-img="caramelchip" alt=""></div>
       <span class="crack-hint">Toca para partirla →</span>
       <div class="crack-reveal">
         <div class="crack-reveal-inner">
@@ -541,7 +538,7 @@
         </div>
       </div>
     </div>
-    <p class="crack-caption">Foto real de nuestras galletas dobles de chocolate keto — sin retoques ni relleno de más.</p>
+    <p class="crack-caption">Foto real de nuestras galletas con caramelo y chocolate — sin retoques ni relleno de más.</p>
   </div>
 </section>
 
@@ -553,8 +550,8 @@
       <h2>10 galletas. Cada una, una pieza de autor.</h2>
       <p>Fotografiadas tal cual salen de nuestra cocina — así se ven, así se parten, así de cremosas quedan.</p>
     </div>
-    <div class="flavor-scroll" id="flavorScroll"></div>
-    <p class="flavor-count">Desliza para ver la colección completa →</p>
+    <div class="flavor-list" id="flavorScroll"></div>
+    <p class="flavor-count">Las 10 galletas de la colección ✦</p>
   </div>
 </section>
 
@@ -776,6 +773,7 @@ const IMG = {
   brownie: "flavor-brownie.jpg",
   zanahoria: "flavor-zanahoria.jpg",
   heroMain: "hero-main.jpg",
+  caramelchip: "flavor-caramelchip.jpg",
   catalinaTaller: "catalina-taller.jpg",
   closingCouple: "closing-couple.jpg",
   studentsGroup: "students-group.jpg",
