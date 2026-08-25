@@ -49,13 +49,21 @@ function normalize(str) {
     .toUpperCase();
 }
 
-// Busca el nombre EXACTO del producto en el HTML y devuelve la posición
-// donde aparece (para poder buscar el precio cerca de ahí) o null si
-// esta página no es la del producto esperado.
+// Busca el nombre EXACTO del producto directamente en el HTML original
+// (permitiendo etiquetas o espacios de más entre palabras, por si el
+// nombre queda partido en varias líneas de HTML) y devuelve la
+// posición donde empieza, en el HTML ORIGINAL — para poder buscar el
+// precio a partir de ahí en el mismo string. Devuelve null si esta
+// página no es la del producto esperado.
+function escapeRegex(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 function findProductNameIndex(html) {
-  const normalizedHtml = normalize(html.replace(/<[^>]+>/g, " "));
-  const idx = normalizedHtml.indexOf(normalize(EXPECTED_PRODUCT_NAME));
-  return idx === -1 ? null : idx;
+  const words = normalize(EXPECTED_PRODUCT_NAME).split(" ").map(escapeRegex);
+  const pattern = new RegExp(words.join("[\\s\\S]{0,30}"), "i");
+  const match = html.match(pattern);
+  return match ? match.index : null;
 }
 
 // Intenta extraer {old, current} de la marca de datos estructurados
@@ -99,22 +107,20 @@ function fromOpenGraph(html) {
 
 // Último recurso: busca el patrón visible "$viejo $nuevo" tal como
 // aparece en la vitrina de Tiendanube (precio tachado seguido del
-// precio con descuento). A diferencia de una búsqueda en toda la
-// página, esto SOLO mira el texto que está cerca (±800 caracteres)
-// de donde aparece el nombre exacto del producto — así, aunque la
-// página muestre productos relacionados con otros precios más abajo,
-// nunca se confunden con el precio de esta oferta.
+// precio con descuento). Como ya confirmamos (en fetchPrice) que el
+// nombre exacto del producto está en esta página, buscamos DESDE ahí
+// hacia adelante en todo el resto del documento y tomamos los dos
+// primeros precios que aparezcan — el precio principal del producto
+// siempre se muestra antes que cualquier sección de "productos
+// relacionados" o "también te puede interesar" al final de la página.
 function fromVisibleText(html, productNameIndex) {
-  const windowRadius = 800;
-  const start = Math.max(0, productNameIndex - windowRadius);
-  const end = Math.min(html.length, productNameIndex + windowRadius);
-  const nearbyText = html.slice(start, end);
+  const relevantHtml = html.slice(productNameIndex);
 
   const pricePattern = /\$\s?([\d]{1,3}(?:[.,]\d{3})*(?:[.,]\d{2})?)/g;
-  const matches = [...nearbyText.matchAll(pricePattern)].map((m) => parseMoney(m[1]));
+  const matches = [...relevantHtml.matchAll(pricePattern)].map((m) => parseMoney(m[1]));
   const plausible = matches.filter((n) => n > 1000 || (n > 1 && n < 100000));
   if (plausible.length >= 2) {
-    return { current: plausible[plausible.length - 1], old: plausible[plausible.length - 2], source: "text-fallback" };
+    return { current: plausible[1], old: plausible[0], source: "text-fallback" };
   }
   if (plausible.length === 1) {
     return { current: plausible[0], old: null, source: "text-fallback-single" };
@@ -192,7 +198,7 @@ exports.handler = async function () {
     };
   } catch (err) {
     return {
-      statusCode: 200, // 200 a propósito: el frontend decide cómo degradar, no lo tratamos como fallo duro de red
+      statusCode: 200,
       headers,
       body: JSON.stringify({
         ok: false,
