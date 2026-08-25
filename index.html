@@ -90,58 +90,75 @@
   /* ============ HERO ============ */
   .hero{
     position:relative;
-    padding:26px 0 40px;
-    background:linear-gradient(180deg, var(--cream) 0%, var(--cream) 55%, var(--cream-deep) 100%);
+    padding:0 0 40px;
+    background:var(--cream);
     overflow:hidden;
   }
-  .hero-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;}
-  .hero-grid{
-    display:grid;grid-template-columns:1fr;gap:26px;align-items:center;
+  .hero-top{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:20px 20px 16px;
   }
-  @media(min-width:900px){
-    .hero-grid{grid-template-columns:1.05fr 0.95fr;gap:40px;}
+  .hero-below{padding-top:26px;}
+  .hero .sub{
+    font-size:17px;line-height:1.6;color:var(--chocolate);
+    max-width:520px;
   }
-  .hero-copy .eyebrow{margin-bottom:14px;display:block;}
+
+  /* ============ FOTO PROTAGONISTA + HOOK SUPERPUESTO ============ */
+  .hero-photo-frame{
+    position:relative;width:100%;
+    aspect-ratio:4/3;
+    max-height:520px;
+    overflow:hidden;
+  }
+  @media(min-width:640px){ .hero-photo-frame{aspect-ratio:16/8;} }
+  .hero-photo-bg{
+    position:absolute;inset:0;width:100%;height:100%;
+    object-fit:cover;object-position:center 42%;
+  }
+  .hero-photo-scrim{
+    position:absolute;inset:0;
+    background:linear-gradient(180deg,
+      var(--cream) 0%, var(--cream) 22%,
+      rgba(251,243,234,0.92) 34%,
+      rgba(251,243,234,0.55) 47%,
+      rgba(251,243,234,0.08) 60%,
+      rgba(251,243,234,0) 70%);
+  }
+  .hero-photo-content{
+    position:absolute;top:0;left:0;right:0;z-index:2;
+    padding:8px 22px 0;
+  }
+  .hero-photo-content .eyebrow{display:block;margin-bottom:10px;}
   .hero h1{
-    font-size:clamp(36px,8vw,62px);
-    line-height:1.05;
-    font-weight:900;
+    font-size:clamp(32px,8vw,54px);
+    line-height:1.06;
+    font-weight:800;
     letter-spacing:-0.01em;
+    color:var(--cacao);
   }
   .hero h1 em{font-style:italic;font-weight:500;color:var(--rose-deep);}
-  /* Titular "fotográfico": el texto se rellena con la foto real de la
-     galleta. Si el navegador no soporta background-clip:text, el
-     @supports de abajo cae a un color sólido legible. */
-  .hook-photo{
-    color: var(--cacao);
-  }
-  @supports ((-webkit-background-clip:text) or (background-clip:text)){
-    .hook-photo{
-      background-size:cover;
-      background-position:center 38%;
-      -webkit-background-clip:text;
-      background-clip:text;
-      -webkit-text-fill-color:transparent;
-      color:transparent;
-      filter:saturate(1.5) contrast(1.2) brightness(1.08);
-    }
-  }
-  .hero .sub{
-    margin-top:18px;font-size:17px;line-height:1.6;color:var(--chocolate);
-    max-width:480px;
+  .hook-ribbon{
+    display:inline-block;margin-top:16px;
+    background:var(--rose-deep);color:var(--white);
+    padding:10px 22px;
+    border-radius:4px 18px 4px 18px;
+    transform:rotate(-2deg);
+    font-family:var(--sans);font-weight:700;font-size:14.5px;letter-spacing:0.01em;
+    box-shadow:0 10px 22px -8px rgba(59,36,32,0.5);
   }
 
   /* ============ VIDEO SHOWCASE ============ */
   .video-showcase{
     position:relative;
     display:flex;flex-direction:column;align-items:center;
-    padding-top:10px;
+    padding-top:40px;
   }
   .video-showcase::before{
-    content:"";position:absolute;top:-40px;right:-30px;
-    width:280px;height:280px;border-radius:50%;
+    content:"";position:absolute;top:0px;right:6%;
+    width:260px;height:260px;border-radius:50%;
     background:radial-gradient(circle, var(--rose-soft) 0%, transparent 70%);
-    opacity:0.6;z-index:0;filter:blur(6px);
+    opacity:0.55;z-index:0;filter:blur(6px);
   }
   .video-frame{
     position:relative;z-index:1;
@@ -160,9 +177,6 @@
   }
   .video-frame .video-embed-wrap{position:absolute;inset:0;z-index:1;background:transparent;}
   .video-frame .video-embed-wrap iframe{width:100%;height:100%;border:0;display:block;}
-  .video-showcase .sound-toggle{
-    position:absolute;top:16px;right:16px;z-index:5;
-  }
   .video-caption{
     position:relative;z-index:1;margin-top:16px;text-align:center;
     font-family:var(--serif);font-style:italic;font-size:15px;color:var(--cacao);
@@ -170,6 +184,7 @@
   }
   .video-caption .dot{width:6px;height:6px;border-radius:50%;background:var(--rose-deep);}
   .sound-toggle{
+    position:absolute;top:16px;right:16px;z-index:5;
     display:flex;align-items:center;gap:6px;
     background:rgba(59,36,32,0.55);backdrop-filter:blur(4px);
     color:var(--white);border:none;border-radius:999px;
@@ -429,58 +444,64 @@
 
 <!-- ============ HERO ============ -->
 <header class="hero">
-  <div class="wrap">
-    <div class="hero-top">
-      <span class="brandmark"><span class="dot"></span> Dulce Bienestar</span>
+  <div class="wrap hero-top">
+    <span class="brandmark"><span class="dot"></span> Dulce Bienestar</span>
+  </div>
+
+  <div class="hero-photo-frame">
+    <img class="hero-photo-bg" src="" data-img="heroMain" alt="Galleta de matcha y pistacho keto partida a la mitad, mostrando su relleno cremoso">
+    <div class="hero-photo-scrim"></div>
+    <div class="hero-photo-content">
+      <span class="eyebrow">Curso virtual · Galletas NY saludables y keto</span>
+      <h1>Hay galletas saludables.<br><em>Y están las de Dulce Bienestar.</em></h1>
+      <span class="hook-ribbon">Descúbrelo aquí ↓</span>
     </div>
-    <div class="hero-grid">
-      <div class="hero-copy">
-        <span class="eyebrow">Curso virtual · Galletas NY saludables y keto</span>
-        <h1><span class="hook-photo" id="hookPhoto">Hay galletas saludables.</span> <em>Y están las de Dulce Bienestar.</em></h1>
-        <p class="sub">Gorditas, suaves y cremosas por dentro, firmes por fuera y con rellenos que se derraman al partirlas. Todas saludables, con deliciosas opciones keto que te van a dejar fascinada.</p>
+  </div>
 
-        <div class="price-chip" id="heroPriceChip">
-          <div class="badge-row">
-            <span class="discount-badge" id="heroDiscountBadge" style="display:none;">35% OFF</span>
-            <span class="promo-left" id="heroPromoLeft">¡Últimos cupos disponibles!</span>
-          </div>
-          <div class="price-line">
-            <span class="old" id="heroPriceCOPold"></span>
-            <span class="new" id="heroPriceCOPnew">Cargando precio…</span>
-            <span class="curr">COP</span>
-          </div>
-          <div class="price-line">
-            <span class="old" id="heroPriceUSDold"></span>
-            <span class="new" id="heroPriceUSDnew">Cargando precio…</span>
-            <span class="curr">USD</span>
-          </div>
-          <div class="price-unavailable-note" id="heroPriceNote" style="display:none;">Precio vigente disponible al hacer clic en comprar ↓</div>
-        </div>
+  <div class="wrap hero-below">
+    <p class="sub">Gorditas, suaves y cremosas por dentro, firmes por fuera y con rellenos que se derraman al partirlas. Todas saludables, con deliciosas opciones keto que te van a dejar fascinada.</p>
 
-        <div class="hero-cta-block">
-          <div class="cta-pair">
-            <a class="btn btn-co" href="#" id="btnCO1">COMPRAR DESDE COLOMBIA 🇨🇴</a>
-            <a class="btn btn-us" href="#" id="btnUS1">COMPRAR DESDE OTRO PAÍS 🌎</a>
-          </div>
-          <p class="cta-hint">Selecciona el botón correspondiente al lugar desde donde realizas tu compra.</p>
-        </div>
+    <div class="price-chip" id="heroPriceChip">
+      <div class="badge-row">
+        <span class="discount-badge" id="heroDiscountBadge" style="display:none;">35% OFF</span>
+        <span class="promo-left" id="heroPromoLeft">¡Últimos cupos disponibles!</span>
       </div>
-
-      <div class="video-showcase">
-        <div class="video-frame">
-          <img class="video-fallback-img" src="" data-img="dobleChoc" alt="" id="videoFallbackImg">
-          <div class="video-embed-wrap" id="videoWrap">
-            <iframe id="heroVimeo"
-              src="https://player.vimeo.com/video/1220926145?background=1&autoplay=1&loop=1&muted=1&playsinline=1"
-              allow="autoplay; fullscreen; picture-in-picture" title="Video de presentación del curso de galletas saludables y keto"></iframe>
-          </div>
-          <button class="sound-toggle" id="soundToggle" type="button" aria-pressed="false">🔇 Activar sonido</button>
-        </div>
-        <p class="video-caption"><span class="dot"></span> Dale play y conoce el curso en 1 minuto</p>
+      <div class="price-line">
+        <span class="old" id="heroPriceCOPold"></span>
+        <span class="new" id="heroPriceCOPnew">Cargando precio…</span>
+        <span class="curr">COP</span>
       </div>
+      <div class="price-line">
+        <span class="old" id="heroPriceUSDold"></span>
+        <span class="new" id="heroPriceUSDnew">Cargando precio…</span>
+        <span class="curr">USD</span>
+      </div>
+      <div class="price-unavailable-note" id="heroPriceNote" style="display:none;">Precio vigente disponible al hacer clic en comprar ↓</div>
+    </div>
+
+    <div class="hero-cta-block">
+      <div class="cta-pair">
+        <a class="btn btn-co" href="#" id="btnCO1">COMPRAR DESDE COLOMBIA 🇨🇴</a>
+        <a class="btn btn-us" href="#" id="btnUS1">COMPRAR DESDE OTRO PAÍS 🌎</a>
+      </div>
+      <p class="cta-hint">Selecciona el botón correspondiente al lugar desde donde realizas tu compra.</p>
+    </div>
+
+    <div class="video-showcase">
+      <div class="video-frame">
+        <img class="video-fallback-img" src="" data-img="dobleChoc" alt="" id="videoFallbackImg">
+        <div class="video-embed-wrap" id="videoWrap">
+          <iframe id="heroVimeo"
+            src="https://player.vimeo.com/video/1220926145?background=1&autoplay=1&loop=1&muted=1&playsinline=1"
+            allow="autoplay; fullscreen; picture-in-picture" title="Video de presentación del curso de galletas saludables y keto"></iframe>
+        </div>
+        <button class="sound-toggle" id="soundToggle" type="button" aria-pressed="false">🔇 Activar sonido</button>
+      </div>
+      <p class="video-caption"><span class="dot"></span> Dale play y conoce el curso en 1 minuto</p>
     </div>
   </div>
 </header>
+
 
 <div class="marquee-strip">
   <div class="marquee-track">
@@ -823,18 +844,6 @@ function setImages(){
   });
 }
 
-/* ======================================================================
-   TITULAR CON FOTO — el texto "Hay galletas saludables." se rellena
-   con la foto real de una galleta partida (background-clip: text).
-   ====================================================================== */
-function setHookPhoto(){
-  const el = document.getElementById('hookPhoto');
-  if(el && IMG.caramelo){
-    el.style.backgroundImage = `linear-gradient(rgba(30,15,10,0.04), rgba(30,15,10,0.04)), url("${IMG.caramelo}")`;
-    el.style.backgroundPosition = 'center 45%';
-  }
-}
-
 function renderFlavors(){
   const track = document.getElementById('flavorScroll');
   track.innerHTML = FLAVORS.map(f => `
@@ -1034,7 +1043,6 @@ function initHeroVideo(){
 
 document.addEventListener('DOMContentLoaded', ()=>{
   setImages();
-  setHookPhoto();
   renderFlavors();
   renderTestimonials();
   renderFAQ();
