@@ -6,7 +6,7 @@
 <title>Curso Virtual de Galletas Saludables y Keto | Dulce Bienestar</title>
 <meta name="description" content="Aprende a crear galletas saludables y keto irresistibles: gorditas, suaves y con rellenos que sorprenden. Curso virtual pregrabado de Dulce Bienestar Academia.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500;1,9..144,600&family=Work+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;0,9..144,700;0,9..144,900;1,9..144,500;1,9..144,600&family=Work+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://player.vimeo.com/api/player.js"></script>
 <style>
   :root{
@@ -102,42 +102,74 @@
     .hero-grid{grid-template-columns:1.05fr 0.95fr;gap:40px;}
   }
   .hero-copy .eyebrow{margin-bottom:14px;display:block;}
-  .hero-hook-row{display:flex;flex-direction:column;align-items:flex-start;gap:16px;}
-  .hero-cookie-badge{
-    flex-shrink:0;width:170px;height:170px;border-radius:50%;overflow:hidden;
-    border:6px solid var(--white);box-shadow:0 20px 40px -12px rgba(59,36,32,0.5);
-    transform:rotate(-6deg);
-  }
-  .hero-cookie-badge img{width:100%;height:100%;object-fit:cover;}
-  @media(min-width:520px){
-    .hero-cookie-badge{width:220px;height:220px;border-width:7px;}
-  }
-  @media(min-width:900px){
-    .hero-cookie-badge{width:240px;height:240px;}
-  }
   .hero h1{
-    font-size:clamp(34px,7vw,58px);
-    line-height:1.04;
-    font-weight:700;
+    font-size:clamp(36px,8vw,62px);
+    line-height:1.05;
+    font-weight:900;
     letter-spacing:-0.01em;
   }
   .hero h1 em{font-style:italic;font-weight:500;color:var(--rose-deep);}
+  /* Titular "fotográfico": el texto se rellena con la foto real de la
+     galleta. Si el navegador no soporta background-clip:text, el
+     @supports de abajo cae a un color sólido legible. */
+  .hook-photo{
+    color: var(--cacao);
+  }
+  @supports ((-webkit-background-clip:text) or (background-clip:text)){
+    .hook-photo{
+      background-size:cover;
+      background-position:center 38%;
+      -webkit-background-clip:text;
+      background-clip:text;
+      -webkit-text-fill-color:transparent;
+      color:transparent;
+      filter:saturate(1.5) contrast(1.2) brightness(1.08);
+    }
+  }
   .hero .sub{
     margin-top:18px;font-size:17px;line-height:1.6;color:var(--chocolate);
     max-width:480px;
   }
-  .hero-media{
-    position:relative;border-radius:28px;overflow:hidden;
-    box-shadow:var(--shadow);
-    aspect-ratio: 4/5;
+
+  /* ============ VIDEO SHOWCASE ============ */
+  .video-showcase{
+    position:relative;
+    display:flex;flex-direction:column;align-items:center;
+    padding-top:10px;
   }
-  .hero-media img{width:100%;height:100%;object-fit:cover;}
-  .hero-media video{width:100%;height:100%;object-fit:cover;display:block;}
-  .video-embed-wrap{position:absolute;inset:0;background:var(--cacao);}
-  .video-embed-wrap.fallback-img{background-size:cover;background-position:center;}
-  .video-embed-wrap iframe{width:100%;height:100%;border:0;display:block;position:relative;z-index:1;}
-  .sound-toggle{
+  .video-showcase::before{
+    content:"";position:absolute;top:-40px;right:-30px;
+    width:280px;height:280px;border-radius:50%;
+    background:radial-gradient(circle, var(--rose-soft) 0%, transparent 70%);
+    opacity:0.6;z-index:0;filter:blur(6px);
+  }
+  .video-frame{
+    position:relative;z-index:1;
+    width:100%;max-width:300px;
+    aspect-ratio:9/16;
+    border-radius:32px;
+    overflow:hidden;
+    background:var(--cacao);
+    box-shadow:0 30px 60px -16px rgba(59,36,32,0.55);
+    border:6px solid var(--white);
+    outline:2px solid var(--gold-soft);
+    outline-offset:-2px;
+  }
+  .video-frame img.video-fallback-img{
+    position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;
+  }
+  .video-frame .video-embed-wrap{position:absolute;inset:0;z-index:1;background:transparent;}
+  .video-frame .video-embed-wrap iframe{width:100%;height:100%;border:0;display:block;}
+  .video-showcase .sound-toggle{
     position:absolute;top:16px;right:16px;z-index:5;
+  }
+  .video-caption{
+    position:relative;z-index:1;margin-top:16px;text-align:center;
+    font-family:var(--serif);font-style:italic;font-size:15px;color:var(--cacao);
+    display:flex;align-items:center;gap:8px;
+  }
+  .video-caption .dot{width:6px;height:6px;border-radius:50%;background:var(--rose-deep);}
+  .sound-toggle{
     display:flex;align-items:center;gap:6px;
     background:rgba(59,36,32,0.55);backdrop-filter:blur(4px);
     color:var(--white);border:none;border-radius:999px;
@@ -145,13 +177,6 @@
     cursor:pointer;
   }
   .sound-toggle:focus-visible{outline:3px solid var(--gold);outline-offset:2px;}
-  .hero-media .tag{
-    position:absolute;bottom:16px;left:16px;
-    background:rgba(251,243,234,0.92);backdrop-filter:blur(4px);
-    padding:10px 16px;border-radius:14px;
-    font-family:var(--serif);font-style:italic;font-size:14px;color:var(--cacao);
-    box-shadow:0 8px 20px -8px rgba(0,0,0,0.25);
-  }
   .price-chip{
     display:flex;flex-direction:column;gap:8px;margin-top:22px;
     background:var(--white);border:1px solid var(--gold-soft);
@@ -411,10 +436,7 @@
     <div class="hero-grid">
       <div class="hero-copy">
         <span class="eyebrow">Curso virtual · Galletas NY saludables y keto</span>
-        <div class="hero-hook-row">
-          <span class="hero-cookie-badge"><img src="" data-img="dobleChoc" alt="Galleta doble chocolate keto partida a la mitad"></span>
-          <h1>Hay galletas saludables. <em>Y están las de Dulce Bienestar.</em></h1>
-        </div>
+        <h1><span class="hook-photo" id="hookPhoto">Hay galletas saludables.</span> <em>Y están las de Dulce Bienestar.</em></h1>
         <p class="sub">Gorditas, suaves y cremosas por dentro, firmes por fuera y con rellenos que se derraman al partirlas. Todas saludables, con deliciosas opciones keto que te van a dejar fascinada.</p>
 
         <div class="price-chip" id="heroPriceChip">
@@ -444,14 +466,17 @@
         </div>
       </div>
 
-      <div class="hero-media">
-        <div class="video-embed-wrap" id="videoWrap">
-          <iframe id="heroVimeo"
-            src="https://player.vimeo.com/video/1220926145?background=1&autoplay=1&loop=1&muted=1&playsinline=1"
-            allow="autoplay; fullscreen; picture-in-picture" title="Video de presentación del curso de galletas saludables y keto"></iframe>
+      <div class="video-showcase">
+        <div class="video-frame">
+          <img class="video-fallback-img" src="" data-img="dobleChoc" alt="" id="videoFallbackImg">
+          <div class="video-embed-wrap" id="videoWrap">
+            <iframe id="heroVimeo"
+              src="https://player.vimeo.com/video/1220926145?background=1&autoplay=1&loop=1&muted=1&playsinline=1"
+              allow="autoplay; fullscreen; picture-in-picture" title="Video de presentación del curso de galletas saludables y keto"></iframe>
+          </div>
+          <button class="sound-toggle" id="soundToggle" type="button" aria-pressed="false">🔇 Activar sonido</button>
         </div>
-        <button class="sound-toggle" id="soundToggle" type="button" aria-pressed="false">🔇 Activar sonido</button>
-        <span class="tag">Dale play y conoce el curso en 1 minuto</span>
+        <p class="video-caption"><span class="dot"></span> Dale play y conoce el curso en 1 minuto</p>
       </div>
     </div>
   </div>
@@ -798,6 +823,18 @@ function setImages(){
   });
 }
 
+/* ======================================================================
+   TITULAR CON FOTO — el texto "Hay galletas saludables." se rellena
+   con la foto real de una galleta partida (background-clip: text).
+   ====================================================================== */
+function setHookPhoto(){
+  const el = document.getElementById('hookPhoto');
+  if(el && IMG.caramelo){
+    el.style.backgroundImage = `linear-gradient(rgba(30,15,10,0.04), rgba(30,15,10,0.04)), url("${IMG.caramelo}")`;
+    el.style.backgroundPosition = 'center 45%';
+  }
+}
+
 function renderFlavors(){
   const track = document.getElementById('flavorScroll');
   track.innerHTML = FLAVORS.map(f => `
@@ -971,19 +1008,18 @@ async function loadLivePrices(){
 /* ======================================================================
    VIDEO DEL HERO — embebido de Vimeo, autoplay silenciado (requisito
    de los navegadores) con botón para activar el sonido vía Vimeo Player API.
+   La foto de respaldo vive DENTRO del mismo marco que el video (mismo
+   tamaño y recorte), así que si Vimeo tarda o falla, nunca se ve una
+   mezcla rara — solo una foto apetecible en el mismo marco elegante.
    ====================================================================== */
 let vimeoPlayer = null;
 function initHeroVideo(){
   const iframe = document.getElementById('heroVimeo');
-  const wrap = document.getElementById('videoWrap');
   const toggle = document.getElementById('soundToggle');
-  if(wrap && IMG.heroMain){ wrap.style.backgroundImage = `url("${IMG.heroMain}")`; }
   if(!iframe || !window.Vimeo){ return; }
   vimeoPlayer = new Vimeo.Player(iframe);
   vimeoPlayer.setMuted(true);
-  // Si Vimeo falla en cargar (video privado, red bloqueada, etc.), la foto de
-  // respaldo puesta arriba en background-image queda visible detrás del iframe.
-  vimeoPlayer.ready().catch(()=>{ console.warn('El video de Vimeo no cargó — se muestra la foto de respaldo.'); });
+  vimeoPlayer.ready().catch(()=>{ console.warn('El video de Vimeo no cargó — se muestra la foto de respaldo dentro del mismo marco.'); });
 
   toggle.addEventListener('click', ()=>{
     vimeoPlayer.getMuted().then(isMuted=>{
@@ -998,6 +1034,7 @@ function initHeroVideo(){
 
 document.addEventListener('DOMContentLoaded', ()=>{
   setImages();
+  setHookPhoto();
   renderFlavors();
   renderTestimonials();
   renderFAQ();
