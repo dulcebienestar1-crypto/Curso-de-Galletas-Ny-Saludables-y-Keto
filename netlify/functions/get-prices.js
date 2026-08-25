@@ -82,14 +82,8 @@ function fromOpenGraph(html) {
   return { current: parseMoney(m[1]), old: null, source: "open-graph" };
 }
 
-// Intento A: busca una etiqueta <del>...</del> (así marcan el precio
-// TACHADO la mayoría de temas de Tiendanube) — la forma más confiable
-// de no confundir tachado con real.
-// Intento B (respaldo): junta precios visibles cerca del nombre del
-// producto, pero IGNORA duplicados — así un precio repetido dos veces
-// nunca se toma como si fuera el par "tachado + real".
 function fromVisibleText(html, productNameIndex) {
-  const relevantHtml = html.slice(productNameIndex, productNameIndex + 6000);
+  const relevantHtml = html.slice(productNameIndex, productNameIndex + 15000);
   const pricePattern = /\$\s?([\d]{1,3}(?:[.,]\d{3})*(?:[.,]\d{2})?)/;
 
   const delMatch = relevantHtml.match(/<del[^>]*>([\s\S]{0,60}?)<\/del>/i);
@@ -121,10 +115,10 @@ function fromVisibleText(html, productNameIndex) {
   if (uniqueValues.length >= 2) {
     let [old, current] = uniqueValues;
     if (current > old) [old, current] = [current, old];
-    return { current, old, source: "text-fallback-distinct" };
+    return { current, old, source: "text-fallback-distinct", allPricesFound: plausible };
   }
   if (uniqueValues.length === 1) {
-    return { current: uniqueValues[0], old: null, source: "text-fallback-single" };
+    return { current: uniqueValues[0], old: null, source: "text-fallback-single", allPricesFound: plausible };
   }
   return null;
 }
