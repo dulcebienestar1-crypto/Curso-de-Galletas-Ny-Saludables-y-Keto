@@ -7,29 +7,26 @@
 //      versión internacional en USD).
 //   2. CONFIRMAR que la página corresponde exactamente al producto
 //      "CURSO VIRTUAL DE GALLETAS LEVAIN SALUDABLES Y KETO LEVAIN ESTILO NY"
-//      — si el nombre exacto no aparece en la página, la función se
-//      detiene y no devuelve ningún precio (nunca adivina ni toma el
-//      precio de otro producto de la tienda).
-//   3. Leer el precio que esa página está mostrando en este momento para
-//      ESE producto exacto.
-//   4. Devolverlo tal cual a la landing — sin convertir monedas, sin tasas
-//      externas, sin inventar ni calcular nada más allá del % de
-//      descuento (aritmética simple sobre los dos precios reales
-//      encontrados junto al nombre del producto, no una conversión).
-//
-// Si tú cambias el precio, el descuento o la oferta en Tiendanube, la
-// próxima vez que alguien abra la landing, esta función lee el valor
-// nuevo automáticamente. No hay ningún precio guardado a mano en el código.
+//      — si el nombre exacto no aparece, la función se detiene y no
+//      devuelve ningún precio.
+//   3. Leer el precio que esa página está mostrando en este momento.
+//   4. Devolverlo tal cual — sin tasas externas, sin inventar nada.
 
 const EXPECTED_PRODUCT_NAME = "CURSO VIRTUAL DE GALLETAS LEVAIN SALUDABLES Y KETO LEVAIN ESTILO NY";
 
+// La página INDIVIDUAL de cada producto en Tiendanube carga el precio
+// tachado con JavaScript después de cargar, así que una función de
+// servidor (que solo lee el HTML crudo, sin ejecutar JavaScript) nunca
+// llega a verlo ahí. La página principal de la tienda, en cambio, SÍ
+// muestra ambos precios como texto plano en el HTML inicial — por eso
+// leemos desde ahí.
 const SOURCES = {
   cop: {
-    url: "https://dulcebienestaracademy.com/productos/curso-virtual-de-galletas-levain-saludables-y-keto-levain-estilo-ny-3h8m6/",
+    url: "https://dulcebienestaracademy.com/",
     currency: "COP",
   },
   usd: {
-    url: "https://dulcebienestaracademy.com/us/productos/curso-virtual-de-galletas-levain-saludables-y-keto-levain-estilo-ny-3h8m6/",
+    url: "https://dulcebienestaracademy.com/us",
     currency: "USD",
   },
 };
@@ -83,7 +80,11 @@ function fromOpenGraph(html) {
 }
 
 function fromVisibleText(html, productNameIndex) {
-  const relevantHtml = html.slice(productNameIndex, productNameIndex + 15000);
+  // En la página principal (que lista varios cursos), el precio del
+  // producto aparece pegado justo al lado de su nombre — así que una
+  // ventana corta es más segura: evita el riesgo de cruzar hacia el
+  // precio del siguiente curso de la lista.
+  const relevantHtml = html.slice(productNameIndex, productNameIndex + 1000);
   const pricePattern = /\$\s?([\d]{1,3}(?:[.,]\d{3})*(?:[.,]\d{2})?)/;
 
   const delMatch = relevantHtml.match(/<del[^>]*>([\s\S]{0,60}?)<\/del>/i);
