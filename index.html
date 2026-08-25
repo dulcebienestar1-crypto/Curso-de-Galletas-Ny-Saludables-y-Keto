@@ -119,11 +119,16 @@
   .hero-photo-scrim{
     position:absolute;inset:0;
     background:linear-gradient(180deg,
-      var(--cream) 0%, var(--cream) 22%,
-      rgba(251,243,234,0.92) 34%,
-      rgba(251,243,234,0.55) 47%,
-      rgba(251,243,234,0.08) 60%,
-      rgba(251,243,234,0) 70%);
+      var(--cream) 0%, var(--cream) 10%,
+      rgba(251,243,234,0.82) 20%,
+      rgba(251,243,234,0.42) 32%,
+      rgba(251,243,234,0.12) 44%,
+      rgba(251,243,234,0) 56%);
+  }
+  .hero-photo-fade-bottom{
+    position:absolute;left:0;right:0;bottom:0;height:22%;
+    background:linear-gradient(180deg, rgba(251,243,234,0) 0%, var(--cream) 92%);
+    pointer-events:none;
   }
   .hero-photo-content{
     position:absolute;top:0;left:0;right:0;z-index:2;
@@ -136,6 +141,7 @@
     font-weight:800;
     letter-spacing:-0.01em;
     color:var(--cacao);
+    text-shadow:0 2px 18px rgba(251,243,234,0.75), 0 1px 3px rgba(251,243,234,0.9);
   }
   .hero h1 em{font-style:italic;font-weight:500;color:var(--rose-deep);}
   .hook-ribbon{
@@ -453,6 +459,7 @@
       <h1>Hay galletas saludables.<br><em>Y están las de Dulce Bienestar.</em></h1>
       <span class="hook-ribbon">Descúbrelo aquí ↓</span>
     </div>
+    <div class="hero-photo-fade-bottom"></div>
   </div>
 
   <div class="wrap hero-below">
