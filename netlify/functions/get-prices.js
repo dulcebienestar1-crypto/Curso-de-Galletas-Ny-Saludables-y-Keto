@@ -21,11 +21,6 @@
 // próxima vez que alguien abra la landing, esta función lee el valor
 // nuevo automáticamente. No hay ningún precio guardado a mano en el código.
 
-// Nombre EXACTO del producto — la única oferta de la que esta función
-// tiene permitido leer un precio. Si en algún momento cambias el nombre
-// del producto en Tiendanube, debes actualizarlo aquí también, o la
-// función dejará de encontrarlo a propósito (en vez de leer el precio
-// equivocado de otro producto).
 const EXPECTED_PRODUCT_NAME = "CURSO VIRTUAL DE GALLETAS LEVAIN SALUDABLES Y KETO LEVAIN ESTILO NY";
 
 const SOURCES = {
@@ -39,8 +34,6 @@ const SOURCES = {
   },
 };
 
-// Normaliza texto para comparar nombres de producto sin que espacios
-// dobles, tildes raras de HTML o mayúsculas/minúsculas den un falso "no coincide".
 function normalize(str) {
   return str
     .replace(/&amp;/g, "&")
@@ -49,12 +42,6 @@ function normalize(str) {
     .toUpperCase();
 }
 
-// Busca el nombre EXACTO del producto directamente en el HTML original
-// (permitiendo etiquetas o espacios de más entre palabras, por si el
-// nombre queda partido en varias líneas de HTML) y devuelve la
-// posición donde empieza, en el HTML ORIGINAL — para poder buscar el
-// precio a partir de ahí en el mismo string. Devuelve null si esta
-// página no es la del producto esperado.
 function escapeRegex(str) {
   return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
@@ -66,10 +53,6 @@ function findProductNameIndex(html) {
   return match ? match.index : null;
 }
 
-// Intenta extraer {old, current} de la marca de datos estructurados
-// (JSON-LD Product/Offer) que Tiendanube suele incluir para SEO.
-// Solo se acepta si el "name" del producto en ese mismo bloque coincide
-// exactamente con EXPECTED_PRODUCT_NAME.
 function fromJsonLd(html) {
   const blocks = [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)];
   for (const block of blocks) {
@@ -84,17 +67,11 @@ function fromJsonLd(html) {
           return { current: Number(offer.price), old: null, source: "json-ld" };
         }
       }
-    } catch (_) {
-      // este bloque no era JSON válido — seguimos con el siguiente
-    }
+    } catch (_) {}
   }
   return null;
 }
 
-// Intenta extraer el precio de las etiquetas Open Graph de producto
-// (<meta property="product:price:amount" ...>). Solo se usa si ya
-// confirmamos por fuera (ver fetchPrice) que la página es del producto
-// correcto — og:title también se valida como capa extra.
 function fromOpenGraph(html) {
   const titleMatch = html.match(/property="og:title"\s+content="([^"]*)"/);
   if (!titleMatch || normalize(titleMatch[1]).indexOf(normalize(EXPECTED_PRODUCT_NAME)) === -1) {
@@ -105,35 +82,57 @@ function fromOpenGraph(html) {
   return { current: parseMoney(m[1]), old: null, source: "open-graph" };
 }
 
-// Último recurso: busca el patrón visible "$viejo $nuevo" tal como
-// aparece en la vitrina de Tiendanube (precio tachado seguido del
-// precio con descuento). Como ya confirmamos (en fetchPrice) que el
-// nombre exacto del producto está en esta página, buscamos DESDE ahí
-// hacia adelante en todo el resto del documento y tomamos los dos
-// primeros precios que aparezcan — el precio principal del producto
-// siempre se muestra antes que cualquier sección de "productos
-// relacionados" o "también te puede interesar" al final de la página.
+// Intento A: busca una etiqueta <del>...</del> (así marcan el precio
+// TACHADO la mayoría de temas de Tiendanube) — la forma más confiable
+// de no confundir tachado con real.
+// Intento B (respaldo): junta precios visibles cerca del nombre del
+// producto, pero IGNORA duplicados — así un precio repetido dos veces
+// nunca se toma como si fuera el par "tachado + real".
 function fromVisibleText(html, productNameIndex) {
-  const relevantHtml = html.slice(productNameIndex);
+  const relevantHtml = html.slice(productNameIndex, productNameIndex + 6000);
+  const pricePattern = /\$\s?([\d]{1,3}(?:[.,]\d{3})*(?:[.,]\d{2})?)/;
 
-  const pricePattern = /\$\s?([\d]{1,3}(?:[.,]\d{3})*(?:[.,]\d{2})?)/g;
-  const matches = [...relevantHtml.matchAll(pricePattern)].map((m) => parseMoney(m[1]));
-  const plausible = matches.filter((n) => n > 1000 || (n > 1 && n < 100000));
-  if (plausible.length >= 2) {
-    return { current: plausible[1], old: plausible[0], source: "text-fallback" };
+  const delMatch = relevantHtml.match(/<del[^>]*>([\s\S]{0,60}?)<\/del>/i);
+  if (delMatch) {
+    const oldPriceMatch = delMatch[1].match(pricePattern);
+    if (oldPriceMatch) {
+      const afterDel = relevantHtml.slice(delMatch.index + delMatch[0].length, delMatch.index + delMatch[0].length + 300);
+      const currentPriceMatch = afterDel.match(pricePattern);
+      if (currentPriceMatch) {
+        const old = parseMoney(oldPriceMatch[1]);
+        const current = parseMoney(currentPriceMatch[1]);
+        if (old > 0 && current > 0) {
+          return { current, old, source: "del-tag" };
+        }
+      }
+    }
   }
-  if (plausible.length === 1) {
-    return { current: plausible[0], old: null, source: "text-fallback-single" };
+
+  const pricePatternGlobal = /\$\s?([\d]{1,3}(?:[.,]\d{3})*(?:[.,]\d{2})?)/g;
+  const matches = [...relevantHtml.matchAll(pricePatternGlobal)].map((m) => parseMoney(m[1]));
+  const plausible = matches.filter((n) => n > 1000 || (n > 1 && n < 100000));
+
+  const distinct = [];
+  for (const n of plausible) {
+    if (distinct.length === 0 || distinct[distinct.length - 1] !== n) distinct.push(n);
+  }
+  const uniqueValues = [...new Set(distinct)];
+
+  if (uniqueValues.length >= 2) {
+    let [old, current] = uniqueValues;
+    if (current > old) [old, current] = [current, old];
+    return { current, old, source: "text-fallback-distinct" };
+  }
+  if (uniqueValues.length === 1) {
+    return { current: uniqueValues[0], old: null, source: "text-fallback-single" };
   }
   return null;
 }
 
 function parseMoney(raw) {
-  // Soporta "260.000" (miles con punto) y "84.54" (decimales con punto)
   const cleaned = raw.replace(/,/g, "");
   const parts = cleaned.split(".");
   if (parts.length > 1 && parts[parts.length - 1].length === 3) {
-    // el último grupo de 3 dígitos es separador de miles, no decimales
     return Number(parts.join(""));
   }
   return Number(cleaned);
@@ -146,9 +145,6 @@ async function fetchPrice(key, { url, currency }) {
   if (!res.ok) throw new Error(`HTTP ${res.status} al leer ${url}`);
   const html = await res.text();
 
-  // Paso obligatorio: confirmar que esta página SÍ es la del producto
-  // exacto. Si no aparece el nombre completo, nos detenemos aquí mismo
-  // — nunca seguimos adivinando con otro precio de la página.
   const productNameIndex = findProductNameIndex(html);
   if (productNameIndex === null) {
     throw new Error(
@@ -177,7 +173,7 @@ async function fetchPrice(key, { url, currency }) {
 exports.handler = async function () {
   const headers = {
     "Content-Type": "application/json",
-    "Cache-Control": "public, max-age=300", // 5 min de caché — no es un valor de precio, es solo caché de red
+    "Cache-Control": "public, max-age=300",
   };
 
   try {
@@ -189,21 +185,13 @@ exports.handler = async function () {
     return {
       statusCode: 200,
       headers,
-      body: JSON.stringify({
-        ok: true,
-        fetchedAt: new Date().toISOString(),
-        cop,
-        usd,
-      }),
+      body: JSON.stringify({ ok: true, fetchedAt: new Date().toISOString(), cop, usd }),
     };
   } catch (err) {
     return {
       statusCode: 200,
       headers,
-      body: JSON.stringify({
-        ok: false,
-        error: String(err && err.message ? err.message : err),
-      }),
+      body: JSON.stringify({ ok: false, error: String(err && err.message ? err.message : err) }),
     };
   }
 };
