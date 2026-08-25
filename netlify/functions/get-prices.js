@@ -5,16 +5,28 @@
 // navegadores. Su único trabajo es:
 //   1. Entrar a las dos páginas oficiales de compra del curso (Colombia y
 //      versión internacional en USD).
-//   2. Leer el precio que esa página está mostrando en este momento para
-//      esta oferta.
-//   3. Devolverlo tal cual a la landing — sin convertir monedas, sin tasas
+//   2. CONFIRMAR que la página corresponde exactamente al producto
+//      "CURSO VIRTUAL DE GALLETAS LEVAIN SALUDABLES Y KETO LEVAIN ESTILO NY"
+//      — si el nombre exacto no aparece en la página, la función se
+//      detiene y no devuelve ningún precio (nunca adivina ni toma el
+//      precio de otro producto de la tienda).
+//   3. Leer el precio que esa página está mostrando en este momento para
+//      ESE producto exacto.
+//   4. Devolverlo tal cual a la landing — sin convertir monedas, sin tasas
 //      externas, sin inventar ni calcular nada más allá del % de
-//      descuento (que es aritmética simple sobre los dos precios reales
-//      encontrados en la misma página, no una conversión).
+//      descuento (aritmética simple sobre los dos precios reales
+//      encontrados junto al nombre del producto, no una conversión).
 //
 // Si tú cambias el precio, el descuento o la oferta en Tiendanube, la
 // próxima vez que alguien abra la landing, esta función lee el valor
 // nuevo automáticamente. No hay ningún precio guardado a mano en el código.
+
+// Nombre EXACTO del producto — la única oferta de la que esta función
+// tiene permitido leer un precio. Si en algún momento cambias el nombre
+// del producto en Tiendanube, debes actualizarlo aquí también, o la
+// función dejará de encontrarlo a propósito (en vez de leer el precio
+// equivocado de otro producto).
+const EXPECTED_PRODUCT_NAME = "CURSO VIRTUAL DE GALLETAS LEVAIN SALUDABLES Y KETO LEVAIN ESTILO NY";
 
 const SOURCES = {
   cop: {
@@ -27,9 +39,29 @@ const SOURCES = {
   },
 };
 
+// Normaliza texto para comparar nombres de producto sin que espacios
+// dobles, tildes raras de HTML o mayúsculas/minúsculas den un falso "no coincide".
+function normalize(str) {
+  return str
+    .replace(/&amp;/g, "&")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toUpperCase();
+}
+
+// Busca el nombre EXACTO del producto en el HTML y devuelve la posición
+// donde aparece (para poder buscar el precio cerca de ahí) o null si
+// esta página no es la del producto esperado.
+function findProductNameIndex(html) {
+  const normalizedHtml = normalize(html.replace(/<[^>]+>/g, " "));
+  const idx = normalizedHtml.indexOf(normalize(EXPECTED_PRODUCT_NAME));
+  return idx === -1 ? null : idx;
+}
+
 // Intenta extraer {old, current} de la marca de datos estructurados
 // (JSON-LD Product/Offer) que Tiendanube suele incluir para SEO.
-// Esta es la fuente MÁS confiable cuando está presente.
+// Solo se acepta si el "name" del producto en ese mismo bloque coincide
+// exactamente con EXPECTED_PRODUCT_NAME.
 function fromJsonLd(html) {
   const blocks = [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)];
   for (const block of blocks) {
@@ -37,6 +69,8 @@ function fromJsonLd(html) {
       const data = JSON.parse(block[1]);
       const items = Array.isArray(data) ? data : [data];
       for (const item of items) {
+        const productName = item.name || item?.["@graph"]?.find((g) => g.name)?.name;
+        if (!productName || normalize(productName) !== normalize(EXPECTED_PRODUCT_NAME)) continue;
         const offer = item.offers || item?.["@graph"]?.find((g) => g.offers)?.offers;
         if (offer && offer.price) {
           return { current: Number(offer.price), old: null, source: "json-ld" };
@@ -50,8 +84,14 @@ function fromJsonLd(html) {
 }
 
 // Intenta extraer el precio de las etiquetas Open Graph de producto
-// (<meta property="product:price:amount" ...>), otra fuente confiable.
+// (<meta property="product:price:amount" ...>). Solo se usa si ya
+// confirmamos por fuera (ver fetchPrice) que la página es del producto
+// correcto — og:title también se valida como capa extra.
 function fromOpenGraph(html) {
+  const titleMatch = html.match(/property="og:title"\s+content="([^"]*)"/);
+  if (!titleMatch || normalize(titleMatch[1]).indexOf(normalize(EXPECTED_PRODUCT_NAME)) === -1) {
+    return null;
+  }
   const m = html.match(/property="product:price:amount"\s+content="([\d.,]+)"/);
   if (!m) return null;
   return { current: parseMoney(m[1]), old: null, source: "open-graph" };
@@ -59,11 +99,19 @@ function fromOpenGraph(html) {
 
 // Último recurso: busca el patrón visible "$viejo $nuevo" tal como
 // aparece en la vitrina de Tiendanube (precio tachado seguido del
-// precio con descuento). Menos robusto: si la plantilla de la tienda
-// cambia de diseño, esto es lo primero que podría dejar de funcionar.
-function fromVisibleText(html, title_hint) {
+// precio con descuento). A diferencia de una búsqueda en toda la
+// página, esto SOLO mira el texto que está cerca (±800 caracteres)
+// de donde aparece el nombre exacto del producto — así, aunque la
+// página muestre productos relacionados con otros precios más abajo,
+// nunca se confunden con el precio de esta oferta.
+function fromVisibleText(html, productNameIndex) {
+  const windowRadius = 800;
+  const start = Math.max(0, productNameIndex - windowRadius);
+  const end = Math.min(html.length, productNameIndex + windowRadius);
+  const nearbyText = html.slice(start, end);
+
   const pricePattern = /\$\s?([\d]{1,3}(?:[.,]\d{3})*(?:[.,]\d{2})?)/g;
-  const matches = [...html.matchAll(pricePattern)].map((m) => parseMoney(m[1]));
+  const matches = [...nearbyText.matchAll(pricePattern)].map((m) => parseMoney(m[1]));
   const plausible = matches.filter((n) => n > 1000 || (n > 1 && n < 100000));
   if (plausible.length >= 2) {
     return { current: plausible[plausible.length - 1], old: plausible[plausible.length - 2], source: "text-fallback" };
@@ -92,8 +140,18 @@ async function fetchPrice(key, { url, currency }) {
   if (!res.ok) throw new Error(`HTTP ${res.status} al leer ${url}`);
   const html = await res.text();
 
-  const result = fromJsonLd(html) || fromOpenGraph(html) || fromVisibleText(html);
-  if (!result) throw new Error(`No se encontró un precio reconocible en ${url}`);
+  // Paso obligatorio: confirmar que esta página SÍ es la del producto
+  // exacto. Si no aparece el nombre completo, nos detenemos aquí mismo
+  // — nunca seguimos adivinando con otro precio de la página.
+  const productNameIndex = findProductNameIndex(html);
+  if (productNameIndex === null) {
+    throw new Error(
+      `La página ${url} no contiene el producto exacto "${EXPECTED_PRODUCT_NAME}" — no se leyó ningún precio por seguridad.`
+    );
+  }
+
+  const result = fromJsonLd(html) || fromOpenGraph(html) || fromVisibleText(html, productNameIndex);
+  if (!result) throw new Error(`Se encontró el producto en ${url}, pero no un precio reconocible cerca de su nombre.`);
 
   const discountPct =
     result.old && result.old > result.current
@@ -106,6 +164,7 @@ async function fetchPrice(key, { url, currency }) {
     old: result.old,
     discountPct,
     source: result.source,
+    verifiedProductName: EXPECTED_PRODUCT_NAME,
   };
 }
 
